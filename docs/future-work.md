@@ -15,6 +15,16 @@ Origen: revisión del código y del CSV `data/moneyball_export_20261101_021304.c
 5. **Pierna buena y `Posición/rol`.** Se guardan pero no influyen. Útiles para el lado de laterales y extremos, y para centrales con salida.
 6. **Pesos de rol configurables.** Hoy están fijos en `src/modules/analysis/roles.ts`. Permitir ajustarlos desde la interfaz y guardarlos con la partida.
 
+### Salidas: primera versión hecha
+
+La vista **Salidas** (`src/modules/analysis/departure.ts`, `DeparturePanel.tsx`) recomienda a quién sacar con tres señales: excedente de cupo, techo bajo (PA) y falta de puesto en el plan. Solo los jugadores en «revisión» pueden salir como recomendados, y nunca si ocupan un puesto del plan. Quedan fuera, para ampliar:
+
+- **Valor alto y contrato corto** (no se eligió en la primera versión). Necesita el parser de importes del punto 3.
+- **Ceder** como tercera opción junto a vender y libre; el archivo solo conoce `sold` y `free`.
+- **Talento bloqueado:** cruzar con `blockedTalent` para sugerir cesión en lugar de venta a jóvenes sin minutos.
+- **Rendimiento:** usar calificación y minutos (punto 2) para no recomendar a quien rinde por encima de su perfil.
+- El umbral de «muy joven» (`YOUNG_PA_AGE = 20`) es una referencia propia, sin calibrar.
+
 ### Notas
 
 - Trabajo sin commitear al hacer la revisión: `DepartureDialog.tsx` y `src/modules/archive/` (parece el flujo de salidas). No se revisó.
