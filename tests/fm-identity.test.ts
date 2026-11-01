@@ -116,7 +116,7 @@ test('columnas omitidas se conservan; alias nuevos y vacíos sustituyen datos an
 
 test('JSON conserva todos los datos FM y admite copias antiguas sin metadata', () => {
   const players = applyFMImport([], preview(), () => 'one').players;
-  const state: DynastyState = { version: 3, stageId: 5, players, fmSaveId: 'Chippenham', tracking: { snapshots: [], minutePlans: [] }, squadPlans: [] };
+  const state: DynastyState = { version: 4, stageId: 5, players, archive: [], fmSaveId: 'Chippenham', tracking: { snapshots: [], minutePlans: [] }, squadPlans: [] };
   assert.deepEqual(parseState(JSON.stringify(state)), state);
   const legacy = { ...players[0] }; delete legacy.fm;
   assert.deepEqual(parseState(JSON.stringify({ version: 1, stageId: 0, players: [legacy] })).players[0], legacy);
@@ -127,7 +127,7 @@ test('JSON conserva todos los datos FM y admite copias antiguas sin metadata', (
 
 test('exportación CSV incluye identidad y columnas FM con sus valores originales', () => {
   const players = applyFMImport([], preview(), () => 'one').players;
-  const rows = buildCSVRows({ version: 3, stageId: 0, players, tracking: { snapshots: [], minutePlans: [] }, squadPlans: [] });
+  const rows = buildCSVRows({ version: 4, stageId: 0, players, archive: [], tracking: { snapshots: [], minutePlans: [] }, squadPlans: [] });
   assert.equal(rows[1][rows[0].indexOf('Unique ID')], '2002103581');
   assert.equal(rows[1][rows[0].indexOf('FM · Calificación')], '6,92');
   assert.equal(rows[1][rows[0].indexOf('FM · Disputados')], '10 (1)');

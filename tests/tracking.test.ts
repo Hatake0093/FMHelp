@@ -15,7 +15,8 @@ const csv = 'Unique ID;Jugador;Edad;Mejor pos.;CA;CP;Minutos;Remate\n1;Jugador r
 test('migración v1→v2 preserva plantilla, notas, metadatos y partida sin inventar históricos', () => {
   const legacy = { version: 1, stageId: 2, players: [player()], fmSaveId: 'Chippenham' };
   const migrated = parseState(JSON.stringify(legacy));
-  assert.equal(migrated.version, 3);
+  assert.equal(migrated.version, 4);
+  assert.deepEqual(migrated.archive, []);
   assert.deepEqual(migrated.players, legacy.players);
   assert.equal(migrated.fmSaveId, 'Chippenham');
   assert.deepEqual(migrated.tracking, { snapshots: [], minutePlans: [] });

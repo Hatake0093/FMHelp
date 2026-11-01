@@ -77,7 +77,7 @@ test('validación de números, límites y PA no inferior a CA', () => {
 });
 test('copias: ida y vuelta, rechazo de versión, etapa, estructura y duplicados', () => {
   const state = { version: 1, stageId: 2, players: [player()] };
-  assert.deepEqual(parseState(JSON.stringify(state)), { ...state, version: 3, tracking: { snapshots: [], minutePlans: [] }, squadPlans: [] });
+  assert.deepEqual(parseState(JSON.stringify(state)), { ...state, version: 4, archive: [], tracking: { snapshots: [], minutePlans: [] }, squadPlans: [] });
   for (const data of [null, { ...state, version: 2 }, { ...state, stageId: 9 }, { ...state, players: [null] }, { ...state, players: [player(), player()] }, { ...state, players: [player({ pa: 1 })] }]) assert.throws(() => parseState(JSON.stringify(data)));
 });
 test('CSV conserva comillas y neutraliza fórmulas en nombres y notas', () => {

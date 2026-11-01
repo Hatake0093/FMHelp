@@ -14,7 +14,7 @@ const plan = (slots = [slot()]): SquadConstructionPlan => ({ id: 'main', saveId:
 test('migraciones v1 y v2 conservan la plantilla y el seguimiento sin inventar asignaciones', () => {
   const legacy = { version: 1, stageId: 2, players: [player('a')], fmSaveId: 'Chippenham' };
   const current = parseState(JSON.stringify(legacy));
-  assert.equal(current.version, 3); assert.deepEqual(current.squadPlans, []); assert.deepEqual(current.players, legacy.players);
+  assert.equal(current.version, 4); assert.deepEqual(current.squadPlans, []); assert.deepEqual(current.players, legacy.players);
   const v2 = { ...emptyState(), version: 2 }; delete (v2 as Record<string, unknown>).squadPlans;
   assert.deepEqual(parseState(JSON.stringify(v2)), emptyState());
   assert.equal(legacy.version, 1);

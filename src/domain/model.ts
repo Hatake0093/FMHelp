@@ -18,10 +18,20 @@ export interface Player {
   fm?: FMPlayerData;
 }
 export type PlayerDraft = Omit<Player, 'id'>;
+export const DEPARTURE_REASONS = ['sold', 'free'] as const;
+export type DepartureReason = typeof DEPARTURE_REASONS[number];
+// Jugador que ya no está en la plantilla (vendido o libre). Conserva su ficha completa y se puede restaurar.
+export interface ArchivedPlayer {
+  player: Player;
+  reason: DepartureReason;
+  date: string; // fecha de la partida (AAAA-MM-DD) o vacío si no se indicó
+  archivedAt: string;
+}
 export interface DynastyState {
-  version: 3;
+  version: 4;
   stageId: number;
   players: Player[];
+  archive: ArchivedPlayer[];
   fmSaveId?: string;
   tracking: TrackingState;
   squadPlans: SquadConstructionPlan[];
