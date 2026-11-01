@@ -1,0 +1,258 @@
+{
+  "version": 2,
+  "stageId": 0,
+  "players": [
+    {
+      "name": "Mateo Ruiz · prueba",
+      "age": 19,
+      "ca": 58,
+      "pa": 120,
+      "position": "DC",
+      "notes": "Jugador ficticio utilizado para comprobar el seguimiento.",
+      "fm": {
+        "uniqueId": "9001",
+        "saveId": "Prueba de seguimiento · ficticia",
+        "sourceFile": "tracking-cut-2.csv",
+        "importedAt": "2026-11-01T12:00:00Z",
+        "values": {
+          "Unique ID": "9001",
+          "Jugador": "Mateo Ruiz · prueba",
+          "Edad": "19",
+          "Mejor pos.": "DC",
+          "CA": "58",
+          "CP": "120",
+          "Minutos": "40",
+          "Velocidad": "11",
+          "Remate": "10",
+          "Calificación": "6,70"
+        }
+      },
+      "id": "tracking-test-1"
+    },
+    {
+      "name": "Carlos Vega · prueba",
+      "age": 27,
+      "ca": 74,
+      "pa": 82,
+      "position": "DC",
+      "notes": "Jugador ficticio utilizado para comprobar el seguimiento.",
+      "fm": {
+        "uniqueId": "9002",
+        "saveId": "Prueba de seguimiento · ficticia",
+        "sourceFile": "tracking-cut-2.csv",
+        "importedAt": "2026-11-01T12:00:00Z",
+        "values": {
+          "Unique ID": "9002",
+          "Jugador": "Carlos Vega · prueba",
+          "Edad": "27",
+          "Mejor pos.": "DC",
+          "CA": "74",
+          "CP": "82",
+          "Minutos": "1000",
+          "Velocidad": "13",
+          "Remate": "13",
+          "Calificación": "7,10"
+        }
+      },
+      "id": "tracking-test-2"
+    },
+    {
+      "name": "Luis Soto · prueba",
+      "age": 25,
+      "ca": 70,
+      "pa": 85,
+      "position": "DC",
+      "notes": "Jugador ficticio utilizado para comprobar el seguimiento.",
+      "fm": {
+        "uniqueId": "9003",
+        "saveId": "Prueba de seguimiento · ficticia",
+        "sourceFile": "tracking-cut-2.csv",
+        "importedAt": "2026-11-01T12:00:00Z",
+        "values": {
+          "Unique ID": "9003",
+          "Jugador": "Luis Soto · prueba",
+          "Edad": "25",
+          "Mejor pos.": "DC",
+          "CA": "70",
+          "CP": "85",
+          "Minutos": "900",
+          "Velocidad": "12",
+          "Remate": "12",
+          "Calificación": "7,00"
+        }
+      },
+      "id": "tracking-test-3"
+    },
+    {
+      "name": "Nico Paz · prueba",
+      "age": 18,
+      "ca": 58,
+      "pa": 105,
+      "position": "DC",
+      "notes": "Jugador ficticio utilizado para comprobar el seguimiento.",
+      "fm": {
+        "uniqueId": "9004",
+        "saveId": "Prueba de seguimiento · ficticia",
+        "sourceFile": "tracking-cut-2.csv",
+        "importedAt": "2026-11-01T12:00:00Z",
+        "values": {
+          "Unique ID": "9004",
+          "Jugador": "Nico Paz · prueba",
+          "Edad": "18",
+          "Mejor pos.": "DC",
+          "CA": "58",
+          "CP": "105",
+          "Minutos": "-",
+          "Velocidad": "11",
+          "Remate": "9",
+          "Calificación": "-"
+        }
+      },
+      "id": "tracking-test-4"
+    }
+  ],
+  "tracking": {
+    "snapshots": [
+      {
+        "gameDate": "2026-08-01",
+        "season": "2026/27",
+        "competition": "Liga",
+        "statsFrom": "2026-07-01",
+        "statsTo": "2026-08-01",
+        "id": "tracking-test-5",
+        "saveId": "Prueba de seguimiento · ficticia",
+        "recordedAt": "2026-11-01T12:00:00Z",
+        "sourceFile": "tracking-cut-1.csv",
+        "players": [
+          {
+            "playerId": "tracking-test-1",
+            "name": "Mateo Ruiz · prueba",
+            "age": 19,
+            "position": "DC",
+            "ca": 56,
+            "pa": 120,
+            "attributes": {
+              "pace": 10,
+              "finishing": 9
+            },
+            "minutes": 20,
+            "rating": 6.7
+          },
+          {
+            "playerId": "tracking-test-2",
+            "name": "Carlos Vega · prueba",
+            "age": 27,
+            "position": "DC",
+            "ca": 74,
+            "pa": 82,
+            "attributes": {
+              "pace": 13,
+              "finishing": 13
+            },
+            "minutes": 1000,
+            "rating": 7.1
+          },
+          {
+            "playerId": "tracking-test-3",
+            "name": "Luis Soto · prueba",
+            "age": 25,
+            "position": "DC",
+            "ca": 70,
+            "pa": 85,
+            "attributes": {
+              "pace": 12,
+              "finishing": 12
+            },
+            "minutes": 900,
+            "rating": 7
+          },
+          {
+            "playerId": "tracking-test-4",
+            "name": "Nico Paz · prueba",
+            "age": 18,
+            "position": "DC",
+            "ca": 58,
+            "pa": 105,
+            "attributes": {
+              "pace": 11,
+              "finishing": 9
+            },
+            "minutes": null,
+            "rating": null
+          }
+        ]
+      },
+      {
+        "gameDate": "2026-09-01",
+        "season": "2026/27",
+        "competition": "Liga",
+        "statsFrom": "2026-07-01",
+        "statsTo": "2026-09-01",
+        "id": "tracking-test-6",
+        "saveId": "Prueba de seguimiento · ficticia",
+        "recordedAt": "2026-11-01T12:00:00Z",
+        "sourceFile": "tracking-cut-2.csv",
+        "players": [
+          {
+            "playerId": "tracking-test-1",
+            "name": "Mateo Ruiz · prueba",
+            "age": 19,
+            "position": "DC",
+            "ca": 58,
+            "pa": 120,
+            "attributes": {
+              "pace": 11,
+              "finishing": 10
+            },
+            "minutes": 40,
+            "rating": 6.7
+          },
+          {
+            "playerId": "tracking-test-2",
+            "name": "Carlos Vega · prueba",
+            "age": 27,
+            "position": "DC",
+            "ca": 74,
+            "pa": 82,
+            "attributes": {
+              "pace": 13,
+              "finishing": 13
+            },
+            "minutes": 1000,
+            "rating": 7.1
+          },
+          {
+            "playerId": "tracking-test-3",
+            "name": "Luis Soto · prueba",
+            "age": 25,
+            "position": "DC",
+            "ca": 70,
+            "pa": 85,
+            "attributes": {
+              "pace": 12,
+              "finishing": 12
+            },
+            "minutes": 900,
+            "rating": 7
+          },
+          {
+            "playerId": "tracking-test-4",
+            "name": "Nico Paz · prueba",
+            "age": 18,
+            "position": "DC",
+            "ca": 58,
+            "pa": 105,
+            "attributes": {
+              "pace": 11,
+              "finishing": 9
+            },
+            "minutes": null,
+            "rating": null
+          }
+        ]
+      }
+    ],
+    "minutePlans": []
+  },
+  "fmSaveId": "Prueba de seguimiento · ficticia"
+}
