@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ArrowRight, GitCompareArrows, Layers3, ShieldAlert, UserRoundSearch } from 'lucide-react';
 import type { DynastyState, Player, SquadConstructionPlan, SquadSlot } from '../domain/model';
 import { normalizeSaveId } from '../domain/fm-data';
+import { inFirstTeam } from '../domain/squads';
 import { attributeLabel, evaluateRole, ROLE_PROFILES } from '../modules/analysis/roles';
 import { analyzePair, analyzeSlot, belongsToSave, DEFAULT_CONSTRUCTION_CRITERIA, FORMATIONS, formationSlots, PAIR_PROFILES, roleById, validateSquadPlan } from '../modules/analysis/construction';
 import type { ConstructionCriteria } from '../modules/analysis/construction';
@@ -17,7 +18,7 @@ export default function ConstructionPanel({ state, onSavePlan, onDetails }: { st
   const [saveId, setSaveId] = useState(state.fmSaveId ?? '');
   const saves = [...new Map([...state.players.flatMap(p => p.fm ? [p.fm.saveId] : []), ...state.squadPlans.map(p => p.saveId)].map(s => [normalizeSaveId(s), s])).values()];
   const selected = saves.find(s => normalizeSaveId(s) === normalizeSaveId(saveId)) ?? saves[0] ?? '';
-  const players = state.players.filter(p => belongsToSave(p, selected));
+  const players = state.players.filter(p => inFirstTeam(p) && belongsToSave(p, selected));
   const saved = state.squadPlans.find(p => normalizeSaveId(p.saveId) === normalizeSaveId(selected));
   const latest = state.tracking.snapshots.filter(s => normalizeSaveId(s.saveId) === normalizeSaveId(selected)).sort((a, b) => b.gameDate.localeCompare(a.gameDate))[0];
   return <>

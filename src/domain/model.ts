@@ -7,6 +7,9 @@ export interface FMPlayerData {
   importedAt: string;
   values: Record<string, string>;
 }
+// Plantilla del club. Un jugador sin `squad` pertenece al primer equipo (así se leen las copias anteriores).
+export const SQUADS = ['first', 'u21', 'u18'] as const;
+export type SquadId = typeof SQUADS[number];
 export interface Player {
   id: string;
   name: string;
@@ -15,6 +18,7 @@ export interface Player {
   ca: number;
   pa: number;
   notes: string;
+  squad?: Exclude<SquadId, 'first'>;
   fm?: FMPlayerData;
 }
 export type PlayerDraft = Omit<Player, 'id'>;
@@ -53,6 +57,8 @@ export interface SquadConstructionPlan {
   slots: SquadSlot[];
 }
 export interface SnapshotContext {
+  // Plantilla a la que corresponde el CSV; ausente = primer equipo. Permite varios cortes de la misma fecha, uno por plantilla.
+  squad?: Exclude<SquadId, 'first'>;
   gameDate: string;
   season: string;
   competition: string;

@@ -22,6 +22,7 @@
 - 3.2 Guardado en IndexedDB y archivo JSON vinculado, utilizable desde otro navegador (Chrome, Edge, Opera).
 - 3.3 Orden por columnas en las tablas de plantilla y análisis.
 - 3.4 Exjugadores: archivar vendidos o libres, restaurar y eliminar.
+- 3.5 Plantillas Sub-21 y Sub-18: pestañas en Mi plantilla, un CSV por plantilla (el selector de la importación fija a cuál pertenece) y señales de ascenso por edad límite y potencial. Sub-21 hasta 21 años y Sub-18 de 15 a 18, con cupo orientativo de 25. Subir a un jugador a mano o importar su CSV en la plantilla superior lo asciende. Referencias propias, definidas en `src/domain/squads.ts`.
 
 ## Pendiente
 
@@ -63,6 +64,8 @@ Ejecutar scripts de Python desde la propia app y ver su salida en la página. Se
 - Sincronización directa con el juego.
 
 ## Ideas pequeñas (sin comprometer)
+
+- Juveniles: ampliar a las vistas de Salidas y Construcción (hoy solo cuentan el primer equipo y, en Análisis, todos los jugadores), con umbrales y cupos de Sub-21 y Sub-18 editables.
 
 - Tras importar un CSV completo, sugerir quitar a quienes ya no aparecen.
 - Evitar que un exjugador reaparezca como «nuevo» si un CSV antiguo lo incluye.

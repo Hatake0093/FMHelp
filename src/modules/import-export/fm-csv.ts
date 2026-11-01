@@ -1,12 +1,13 @@
-import type { Player, PlayerDraft, Position } from '../../domain/model.ts';
+import type { Player, PlayerDraft, Position, SquadId } from '../../domain/model.ts';
 import { POSITIONS } from '../../domain/model.ts';
 import { validatePlayer } from '../../domain/players.ts';
+import { squadOf } from '../../domain/squads.ts';
 import { attributeWarnings, findColumn, FM_FIELDS, fmIdentity, mergeFMValues, normalizeHeader, normalizeSaveId, validFMData, validFMId } from '../../domain/fm-data.ts';
 
 export const IMPORT_FIELDS = ['name', 'age', 'position', 'ca', 'pa'] as const;
 export type ImportField = typeof IMPORT_FIELDS[number];
 export type ColumnMapping = Record<ImportField, number> & { fmId?: number };
-export interface ImportContext { saveId?: string; sourceFile?: string; importedAt?: string; linkByName?: boolean }
+export interface ImportContext { saveId?: string; sourceFile?: string; importedAt?: string; linkByName?: boolean; squad?: SquadId }
 export interface CSVTable {
   headers: string[];
   rows: string[][];
@@ -21,6 +22,8 @@ export interface ImportRow {
   action: 'add' | 'update' | 'link' | 'skip';
   targetId?: string;
   warnings: string[];
+  // Plantilla de la que viene una ficha existente cuando el CSV la cambia (p. ej. ascenso de Sub-21 a primer equipo).
+  fromSquad?: SquadId;
 }
 
 export const playerNameKey = (name: string) => name.normalize('NFC').trim().replace(/\s+/g, ' ').toLocaleLowerCase('es');
@@ -138,10 +141,12 @@ export function previewImport(table: CSVTable, mapping: ColumnMapping, existing:
     };
     const values = Object.fromEntries(table.headers.map((header, i) => [header, row[i] ?? '']));
     const uniqueId = hasId ? row[mapping.fmId!] ?? '' : undefined;
+    if (context.squad && context.squad !== 'first') draft.squad = context.squad;
     draft.fm = { ...(uniqueId ? { uniqueId } : {}), saveId, sourceFile: context.sourceFile ?? 'CSV de FM26', importedAt: context.importedAt ?? new Date().toISOString(), values };
     const duplicate = !hasId && existingNames.has(playerNameKey(draft.name));
     let action: ImportRow['action'] = duplicate ? 'skip' : 'add';
     let targetId: string | undefined;
+    let fromSquad: SquadId | undefined;
     let error: string | null = row.length !== table.headers.length ? 'El número de celdas no coincide con los encabezados.' : null;
     if (!error && Object.values(values).some(value => value.length > 4000)) error = 'Una celda supera el límite de 4.000 caracteres.';
     if (!error && !position) error = 'Elige el grupo de posición para este jugador.';
@@ -152,17 +157,17 @@ export function previewImport(table: CSVTable, mapping: ColumnMapping, existing:
     if (!error && hasId) {
       const matches = existing.filter(p => p.fm?.uniqueId && fmIdentity(p.fm.saveId, p.fm.uniqueId) === fmIdentity(saveId, uniqueId!));
       if (matches.length > 1) error = 'El guardado contiene más de una ficha con este ID de FM.';
-      else if (matches.length === 1) { action = 'update'; targetId = matches[0].id; }
+      else if (matches.length === 1) { action = 'update'; targetId = matches[0].id; fromSquad = squadOf(matches[0]); }
       else {
         const legacy = existing.filter(p => !p.fm?.uniqueId && (!p.fm || normalizeSaveId(p.fm.saveId) === normalizeSaveId(saveId)) && playerNameKey(p.name) === playerNameKey(draft.name));
         if (legacy.length) {
           if (legacy.length !== 1 || (names.get(playerNameKey(draft.name)) ?? 0) !== 1) error = 'Coincidencia de nombre ambigua con fichas sin ID; vincula o corrige esas fichas antes de importar.';
           else if (!context.linkByName) error = 'Coincide con una ficha sin ID. Activa la vinculación por nombre si es el mismo jugador.';
-          else { action = 'link'; targetId = legacy[0].id; }
+          else { action = 'link'; targetId = legacy[0].id; fromSquad = squadOf(legacy[0]); }
         }
       }
     }
-    return { number: index + 2, draft, originalPosition, error, duplicate, action, targetId, warnings: attributeWarnings(values) };
+    return { number: index + 2, draft, originalPosition, error, duplicate, action, targetId, warnings: attributeWarnings(values), ...(fromSquad && fromSquad !== squadOf(draft) ? { fromSquad } : {}) };
   });
 }
 

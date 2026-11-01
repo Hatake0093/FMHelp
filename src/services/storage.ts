@@ -23,7 +23,7 @@ function parsePlayer(p: Player, ids: Set<string>, fmIds: Set<string>): Player {
       fmIds.add(key);
     }
   }
-  return { id: p.id, name: p.name.trim(), age: p.age, position: p.position, ca: p.ca, pa: p.pa, notes: p.notes, ...(p.fm ? { fm: { ...p.fm, values: { ...p.fm.values } } } : {}) };
+  return { id: p.id, name: p.name.trim(), age: p.age, position: p.position, ca: p.ca, pa: p.pa, notes: p.notes, ...(p.squad ? { squad: p.squad } : {}), ...(p.fm ? { fm: { ...p.fm, values: { ...p.fm.values } } } : {}) };
 }
 
 function parseArchive(value: unknown, ids: Set<string>, fmIds: Set<string>): ArchivedPlayer[] {

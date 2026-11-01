@@ -15,6 +15,7 @@ export function validGameDate(value: unknown): value is string {
   return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
 }
 export function validateSnapshotContext(context: SnapshotContext): string | null {
+  if (context.squad !== undefined && context.squad !== 'u21' && context.squad !== 'u18') return 'La plantilla del corte no es válida.';
   if (!validGameDate(context.gameDate) || !validGameDate(context.statsFrom) || !validGameDate(context.statsTo)) return 'Escribe fechas válidas de la partida y del periodo estadístico.';
   if (context.statsFrom > context.statsTo || context.statsTo > context.gameDate) return 'El periodo debe empezar antes de terminar y no superar la fecha de la partida.';
   if (!text(context.season) || !text(context.competition)) return 'Indica temporada y competición o alcance estadístico (máximo 80 caracteres).';
@@ -41,13 +42,19 @@ export function observePlayer(player: Player, playerId = player.id): PlayerObser
     minutes: parseMinutes(readFMValue(player.fm, FM_FIELDS.minutes)), rating: parseRating(readFMValue(player.fm, FM_FIELDS.rating)) };
 }
 export function snapshotKey(snapshot: SnapshotContext & { saveId: string }) {
-  return JSON.stringify([normalizeSaveId(snapshot.saveId), snapshot.gameDate, contextKey(snapshot.season), contextKey(snapshot.competition), snapshot.statsFrom, snapshot.statsTo]);
+  // La plantilla forma parte de la identidad: el CSV del Sub-21 y el del primer equipo pueden compartir fecha, temporada y periodo.
+  return JSON.stringify([normalizeSaveId(snapshot.saveId), snapshot.gameDate, contextKey(snapshot.season), contextKey(snapshot.competition), snapshot.statsFrom, snapshot.statsTo, snapshot.squad ?? 'first']);
 }
-export function importWithTracking(state: DynastyState, rows: ImportRow[], saveId: string, context?: SnapshotContext, makeId: () => string = () => crypto.randomUUID()) {
+// La plantilla del corte la dicta el CSV importado (sus filas), no el formulario.
+const withSquad = (context: SnapshotContext, squad: SnapshotContext['squad']): SnapshotContext => { const { squad: _ignored, ...base } = context; return { ...base, ...(squad ? { squad } : {}) }; };
+export function importWithTracking(state: DynastyState, rows: ImportRow[], saveId: string, rawContext?: SnapshotContext, makeId: () => string = () => crypto.randomUUID()) {
   if (!text(saveId)) throw new Error('Indica una partida válida.');
   const accepted = importableRows(rows);
   if (!accepted.length) throw new Error('No hay filas válidas para importar.');
+  const squad = accepted[0].draft.squad;
+  if (accepted.some(row => row.draft.squad !== squad)) throw new Error('Las filas pertenecen a plantillas distintas.');
   if (accepted.some(row => !row.draft.fm || normalizeSaveId(row.draft.fm.saveId) !== normalizeSaveId(saveId))) throw new Error('La partida de las filas no coincide con la importación.');
+  const context = rawContext && withSquad(rawContext, squad);
   if (context) {
     if (state.tracking.snapshots.length >= 2000) throw new Error('Se alcanzó el límite de 2.000 cortes. Exporta una copia antes de continuar sin registrar histórico.');
     const error = validateSnapshotContext(context);
@@ -75,7 +82,7 @@ export function updateSnapshotContext(tracking: TrackingState, id: string, conte
   if (!current) throw new Error('El corte ya no existe.');
   const error = validateSnapshotContext(context);
   if (error) throw new Error(error);
-  if (tracking.snapshots.some(s => s.id !== id && snapshotKey(s) === snapshotKey({ ...context, saveId: current.saveId }))) throw new Error('Ya existe otro corte con esa fecha, temporada, alcance y periodo.');
+  if (tracking.snapshots.some(s => s.id !== id && snapshotKey(s) === snapshotKey({ ...context, squad: current.squad, saveId: current.saveId }))) throw new Error('Ya existe otro corte con esa fecha, temporada, alcance y periodo.');
   const { gameDate, statsFrom, statsTo } = context;
   return { ...tracking, snapshots: tracking.snapshots.map(s => s.id === id ? { ...s, gameDate, statsFrom, statsTo, season: context.season.trim(), competition: context.competition.trim() } : s) };
 }
@@ -153,7 +160,7 @@ export function parseTracking(value: unknown): TrackingState {
       if (!Object.entries(p.attributes).every(([key, v]) => FM_ATTRIBUTES.some(a => a.key === key) && Number.isInteger(v) && v >= 1 && v <= 20) || !(p.minutes === null || Number.isInteger(p.minutes) && p.minutes >= 0 && p.minutes <= 1_000_000) || !(p.rating === null || Number.isFinite(p.rating) && p.rating >= 1 && p.rating <= 10)) throw new Error('Atributos, minutos o calificación de histórico inválidos.');
       return { playerId: p.playerId, name: p.name, age: p.age, position: p.position, ca: p.ca, pa: p.pa, attributes: { ...p.attributes }, minutes: p.minutes, rating: p.rating };
     });
-    return { id: s.id, saveId: s.saveId, gameDate: s.gameDate, season: s.season, competition: s.competition, statsFrom: s.statsFrom, statsTo: s.statsTo, recordedAt: s.recordedAt, sourceFile: s.sourceFile, players };
+    return { id: s.id, saveId: s.saveId, ...(s.squad ? { squad: s.squad } : {}), gameDate: s.gameDate, season: s.season, competition: s.competition, statsFrom: s.statsFrom, statsTo: s.statsTo, recordedAt: s.recordedAt, sourceFile: s.sourceFile, players };
   });
   let result: TrackingState = { snapshots, minutePlans: [] };
   const planIds = new Set<string>();

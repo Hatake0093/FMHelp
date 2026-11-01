@@ -40,6 +40,7 @@ Verificación: pruebas del dominio y de importación progresiva, compilación de
 ### Gestión de plantilla y datos
 
 - Alta, consulta, edición y eliminación confirmada de jugadores; edad, posición, CA, PA y notas.
+- Plantillas **Primer equipo, Sub-21 y Sub-18**: pestañas en Mi plantilla, un CSV por plantilla (se elige su plantilla al importar) y señales de ascenso (listo para subir, proyecto, revisar) según edad límite y potencial. Sub-21 hasta 21 años, Sub-18 de 15 a 18, cupo orientativo de 25. Los cupos y umbrales del primer equipo no cuentan a los juveniles. Reglas en `src/domain/squads.ts`.
 - «Vendido / libre»: archiva al jugador (con motivo y fecha opcional) sin perder su ficha. Deja de contar en la plantilla; desde «Exjugadores» se puede ver su ficha, restaurar o eliminar definitivamente. Formato de copia v4 (`archive`).
 - Nueve etapas con la tabla CA original. Umbrales de núcleo: 55, 65, 75, 90, 105, 120, 130, 140 y 150 (referencia: equipos de Champions con ~10 jugadores por encima de 150). Rotación: 15 puntos menos (40 … 135). LAT: dos puntos menos. Los valores son referencias de planificación propias, no datos oficiales del juego.
 - Primer equipo propuesto de 20 competitivos y 10 de desarrollo. Los demás registros permanecen en revisión.

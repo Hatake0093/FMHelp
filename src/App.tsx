@@ -5,6 +5,8 @@ import PlayerForm from './components/PlayerForm';
 import FMImportPanel from './components/FMImportPanel';
 import PlayerDetails from './components/PlayerDetails';
 import DepartureDialog from './components/DepartureDialog';
+import YouthPanel from './components/YouthPanel';
+import { inFirstTeam, SQUAD_LABELS } from './domain/squads';
 import { archivePlayer, DEPARTURE_LABELS, purgeArchived, restorePlayer } from './modules/archive';
 import AnalysisPanel from './components/AnalysisWorkspace';
 import TrackingPanel from './components/TrackingPanel';
@@ -12,8 +14,8 @@ import DeparturePanel from './components/DeparturePanel';
 import { SortHeader } from './components/SortHeader';
 import { compareBy, nextSort } from './domain/sorting';
 import type { SortDir, SortState } from './domain/sorting';
-import { POSITIONS } from './domain/model';
-import type { ArchivedPlayer, DepartureReason, DynastyState, Evaluation, Group, MinutePlan, Player, PlayerDraft, SnapshotContext, SquadConstructionPlan } from './domain/model';
+import { POSITIONS, SQUADS } from './domain/model';
+import type { ArchivedPlayer, DepartureReason, DynastyState, Evaluation, Group, MinutePlan, SquadId, Player, PlayerDraft, SnapshotContext, SquadConstructionPlan } from './domain/model';
 import { evaluateSquad, GROUP_LABELS } from './domain/players';
 import { nextStageId, referenceCA, STAGES } from './domain/stages';
 import { normalizeSaveId } from './domain/fm-data';
@@ -75,7 +77,8 @@ export default function App() {
   const [search, setSearch] = useState('');
   const [group, setGroup] = useState<'all' | Group>('all');
   const [position, setPosition] = useState('all');
-  const [form, setForm] = useState<{ player: Player | null } | null>(null);
+  const [form, setForm] = useState<{ player: Player | null; squad?: SquadId } | null>(null);
+  const [squadTab, setSquadTab] = useState<SquadId>('first');
   const [detailId, setDetailId] = useState<string | null>(null);
   const [squadSort, setSquadSort] = useState<SortState<SquadSortKey> | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Player | null>(null);
@@ -85,6 +88,7 @@ export default function App() {
   const fileInput = useRef<HTMLInputElement>(null);
   const stage = STAGES[state.stageId];
   const next = STAGES[nextStageId(state.stageId)];
+  const firstCount = state.players.filter(inFirstTeam).length;
   const evaluations = useMemo(() => evaluateSquad(state.players, state.stageId), [state]);
   const summary = summarizeSquad(evaluations);
   const lastContext = state.tracking.snapshots.filter(s => normalizeSaveId(s.saveId) === normalizeSaveId(state.fmSaveId ?? '')).at(-1);
@@ -98,6 +102,11 @@ export default function App() {
     saveState(updated).then(() => { setStorageError(null); setStorageBlocked(false); }).catch(() => setStorageError(STORAGE_FAILED));
     setNotice(message);
     return true;
+  }
+  function moveToSquad(player: Player, to: SquadId) {
+    const { squad: _old, ...rest } = player;
+    const moved: Player = to === 'first' ? rest : { ...rest, squad: to };
+    commit({ ...state, players: state.players.map(p => p.id === player.id ? moved : p) }, `${player.name} pasa a ${SQUAD_LABELS[to]}.`);
   }
   function savePlayer(draft: PlayerDraft) {
     const existing = form?.player;
@@ -170,25 +179,26 @@ export default function App() {
     <div className="workspace">
       <header className="topbar"><div>Mi club <ChevronRight size={14} /><strong>{navigation.find(n => n.id === page)?.label}</strong></div><span className="local-indicator" title={fileSync.fileName || undefined}><span /> {syncLabels[fileSync.status]}</span></header>
       <main>
-        <div className="page-heading"><div><p className="eyebrow">CHIPPENHAM TOWN · PLAN MAESTRO</p><h1>{pageTitles[page]}</h1><p className="muted">{page === 'squad' ? 'Compite hoy. Desarrolla el equipo de mañana.' : 'Cada decisión cuenta en el proyecto a largo plazo.'}</p></div>{page === 'squad' && <button className="button primary" onClick={() => setForm({ player: null })}><Plus size={18} /> Nuevo jugador</button>}</div>
+        <div className="page-heading"><div><p className="eyebrow">CHIPPENHAM TOWN · PLAN MAESTRO</p><h1>{pageTitles[page]}</h1><p className="muted">{page === 'squad' ? 'Compite hoy. Desarrolla el equipo de mañana.' : 'Cada decisión cuenta en el proyecto a largo plazo.'}</p></div>{page === 'squad' && <button className="button primary" onClick={() => setForm({ player: null, squad: squadTab })}><Plus size={18} /> Nuevo jugador</button>}</div>
         {storageError && <div className="alert" role="alert">{storageError}{storageBlocked && <button className="button secondary" onClick={() => commit(emptyState(), 'Nueva partida iniciada.', true)}>Empezar de nuevo</button>}</div>}
         {fileSync.status === 'needs-access' && <div className="alert" role="alert">Tu archivo <b>{fileSync.fileName}</b> necesita tu permiso para seguir guardando. {fileSync.message}<button className="button secondary" onClick={() => void fileSync.reconnect()}>Reconectar archivo</button></div>}
         {fileSync.status === 'conflict' && <div className="alert" role="alert">{fileSync.message}<button className="button secondary" onClick={() => void fileSync.resolve('file')}>Usar el archivo</button><button className="button secondary" onClick={() => void fileSync.resolve('local')}>Mantener este navegador</button></div>}
         {fileSync.status === 'error' && <div className="alert" role="alert">{fileSync.message}</div>}
         <div className="notification" role="status" aria-live="polite">{notice && <><Check size={16} />{notice}<button className="icon-button" aria-label="Cerrar aviso" onClick={() => setNotice('')}><X size={16} /></button></>}</div>
         {(page === 'squad' || page === 'stages') && <section className="stage-banner" aria-label="Etapa deportiva actual"><div className="stage-number">{String(stage.id + 1).padStart(2, '0')}</div><div className="stage-description"><span className="eyebrow">ETAPA DEPORTIVA ACTUAL</span><h2>{stage.name}</h2><p>{stage.competition}</p></div><div className="stage-target"><span>PRÓXIMO OBJETIVO</span><strong>{stage.id === 8 ? 'Consolidar la dinastía' : next.name} <ArrowRight size={16} /></strong></div><label className="stage-select">Cambiar etapa<select aria-label="Etapa deportiva" value={state.stageId} onChange={e => commit({ ...state, stageId: Number(e.target.value) }, 'Etapa actualizada. Plantilla reevaluada.')}>{STAGES.map(s => <option key={s.id} value={s.id}>{s.id + 1}. {s.name}</option>)}</select></label></section>}
-        {page === 'squad' && <>
+        {page === 'squad' && <div className="tabs squad-tabs" aria-label="Plantilla">{SQUADS.map(id => <button key={id} className={squadTab === id ? 'selected' : ''} aria-pressed={squadTab === id} onClick={() => setSquadTab(id)}>{SQUAD_LABELS[id]} <span className="count-badge">{state.players.filter(p => (p.squad ?? 'first') === id).length}</span></button>)}</div>}
+        {page === 'squad' && squadTab === 'first' && <>
           <div className="stats-grid">
             <StatCard title="Núcleo competitivo" count={summary.competitive} total={20} icon={Shield} detail="CA de la etapa actual · sin límite de edad" />
             <StatCard title="Grupo de desarrollo" count={summary.development} total={10} icon={Leaf} detail="Hasta 23 años · PA de la siguiente etapa" green />
-            <StatCard title="Por evaluar" count={summary.review} icon={ClipboardList} detail={`${state.players.length} registrados · ${summary.competitive + summary.development} en el primer equipo`} />
+            <StatCard title="Por evaluar" count={summary.review} icon={ClipboardList} detail={`${firstCount} registrados · ${summary.competitive + summary.development} en el primer equipo`} />
           </div>
           <section className="panel reference-panel"><div className="section-heading"><div><h2>El nivel que buscamos</h2><p>Referencias por posición para esta etapa</p></div><button className="text-button" onClick={() => setPage('stages')}>Ver las 9 etapas <ArrowRight size={15} /></button></div><div className="reference-grid">{POSITIONS.map(p => <div key={p}><span>{p}</span><strong>{referenceCA(stage.id, p)}<small>CA</small></strong><p>Rotación <b>{referenceCA(stage.id, p, 'depth')}</b> · PA objetivo <b>{referenceCA(next.id, p)}</b></p></div>)}</div></section>
-          <section className="panel squad-panel"><div className="section-heading"><div><h2>Plantilla y desarrollo <span className="count-badge">{state.players.length}</span></h2><p>La base de tu próxima gran temporada.</p></div><button className="button secondary compact" onClick={() => exportCSV(state)}><ArrowDownToLine size={15} /> Exportar CSV</button></div>
+          <section className="panel squad-panel"><div className="section-heading"><div><h2>Plantilla y desarrollo <span className="count-badge">{firstCount}</span></h2><p>La base de tu próxima gran temporada.</p></div><button className="button secondary compact" onClick={() => exportCSV(state)}><ArrowDownToLine size={15} /> Exportar CSV</button></div>
             <div className="table-toolbar"><div className="tabs" aria-label="Filtrar por grupo">{(['all', 'competitive', 'development', 'review'] as const).map(g => <button key={g} className={group === g ? 'selected' : ''} onClick={() => setGroup(g)} aria-pressed={group === g}>{g === 'all' ? 'Todos' : GROUP_LABELS[g]}</button>)}</div><div className="filters"><label className="search-field"><Search size={16} /><input aria-label="Buscar jugador" placeholder="Buscar jugador…" value={search} onChange={e => setSearch(e.target.value)} /></label><select aria-label="Filtrar por posición" value={position} onChange={e => setPosition(e.target.value)}><option value="all">Todas las posiciones</option>{POSITIONS.map(p => <option key={p}>{p}</option>)}</select></div></div>
             <div className="table-scroll"><table><thead><tr>{([['name', 'JUGADOR'], ['age', 'EDAD'], ['position', 'POSICIÓN'], ['ca', 'CA'], ['pa', 'PA'], ['level', 'NIVEL ACTUAL'], ['group', 'GRUPO PROPUESTO']] as const).map(([key, label]) => <SortHeader key={key} label={label} sortKey={key} sort={squadSort} onSort={k => setSquadSort(nextSort(squadSort, k, SQUAD_FIRST_DIR[k]))} />)}<th><span className="sr-only">Acciones</span></th></tr></thead><tbody>{rows.map(e => <tr key={e.player.id}><td><div className="player-name"><span className="player-avatar">{e.player.name.split(/\s+/).slice(0, 2).map(s => s[0]).join('')}</span><div><strong>{e.player.name}</strong>{e.player.notes && <small title={e.player.notes}>{e.player.notes}</small>}</div></div></td><td>{e.player.age}</td><td><span className="position-chip">{e.player.position}</span></td><td><b>{e.player.ca}</b></td><td>{e.player.pa}</td><td><div className="level"><span>{Math.round(e.player.ca / e.targetCA * 100)}%</span><div><i style={{ width: `${Math.min(100, e.player.ca / e.targetCA * 100)}%` }} /></div></div></td><td><span className={`group-badge ${e.group}`}>{GROUP_LABELS[e.group]}</span><small className="evaluation-reason">{e.reason}</small></td><td><div className="row-actions"><button className="icon-button" aria-label={`Ver ficha FM de ${e.player.name}`} onClick={() => setDetailId(e.player.id)}><Eye size={15} /></button><button className="icon-button" aria-label={`Editar a ${e.player.name}`} onClick={() => setForm({ player: e.player })}><Pencil size={15} /></button><button className="icon-button" aria-label={`Archivar a ${e.player.name} como vendido o libre`} title="Vendido / libre" onClick={() => setDeparting(e.player)}><LogOut size={15} /></button><button className="icon-button danger" aria-label={`Eliminar a ${e.player.name}`} onClick={() => setPendingDelete(e.player)}><Trash2 size={15} /></button></div></td></tr>)}</tbody></table></div>
-            {!filtered.length && <div className="empty-state"><span className="empty-icon"><Users size={28} /></span><h3>{state.players.length ? 'No hay coincidencias' : 'Aquí empieza tu dinastía'}</h3><p>{state.players.length ? 'Prueba con otro nombre, grupo o posición.' : 'Añade tu primer futbolista y descubre su lugar en el proyecto.'}</p><div>{state.players.length ? <button className="button secondary" onClick={() => { setSearch(''); setGroup('all'); setPosition('all'); }}>Limpiar filtros</button> : <><button className="button primary" onClick={() => setForm({ player: null })}><Plus size={16} /> Añadir primer jugador</button><button className="text-button" onClick={loadDemo}>Probar con datos ficticios <ArrowRight size={15} /></button></>}</div></div>}
-            <div className="table-footer"><span>{filtered.length} de {state.players.length} futbolistas</span><span>Primer equipo: {summary.competitive + summary.development} / 30 plazas</span></div>
+            {!filtered.length && <div className="empty-state"><span className="empty-icon"><Users size={28} /></span><h3>{firstCount ? 'No hay coincidencias' : 'Aquí empieza tu dinastía'}</h3><p>{firstCount ? 'Prueba con otro nombre, grupo o posición.' : 'Añade tu primer futbolista y descubre su lugar en el proyecto.'}</p><div>{firstCount ? <button className="button secondary" onClick={() => { setSearch(''); setGroup('all'); setPosition('all'); }}>Limpiar filtros</button> : <><button className="button primary" onClick={() => setForm({ player: null })}><Plus size={16} /> Añadir primer jugador</button><button className="text-button" onClick={loadDemo}>Probar con datos ficticios <ArrowRight size={15} /></button></>}</div></div>}
+            <div className="table-footer"><span>{filtered.length} de {firstCount} futbolistas</span><span>Primer equipo: {summary.competitive + summary.development} / 30 plazas</span></div>
           </section>
           {state.archive.length > 0 && <section className="panel"><details className="analysis-disclosure"><summary>Exjugadores · {state.archive.length}</summary>
             <p className="tracking-help">Vendidos o libres. No cuentan en la plantilla ni en las evaluaciones; su ficha y su historial se conservan.</p>
@@ -197,6 +207,7 @@ export default function App() {
           </details></section>}
           <div className="model-note"><CircleHelp size={17} /><p>Una guía para decidir. La propuesta usa CA, PA y edad; el rendimiento y los atributos por rol siguen en tus manos. Cumplir 24 años no implica una salida automática.</p></div>
         </>}
+        {page === 'squad' && squadTab !== 'first' && <YouthPanel players={state.players} squad={squadTab} stageId={state.stageId} onDetails={player => setDetailId(player.id)} onEdit={player => setForm({ player })} onMove={moveToSquad} onDepart={setDeparting} onDelete={setPendingDelete} onImport={() => setPage('data')} onAdd={() => setForm({ player: null, squad: squadTab })} />}
         {page === 'stages' && <section className="panel"><div className="section-heading"><div><h2>Nueve etapas, una visión</h2><p>CA mínimo orientativo en escala de 1 a 200. Selecciona una etapa para aplicarla.</p></div><Flag size={22} /></div><div className="table-scroll"><table className="stages-table"><thead><tr><th>ETAPA DEPORTIVA</th>{POSITIONS.map(p => <th key={p}>{p}</th>)}<th>PLANIFICACIÓN</th></tr></thead><tbody>{STAGES.map(s => <tr key={s.id} className={s.id === stage.id ? 'current-stage' : ''}><td><b className="stage-index">{String(s.id + 1).padStart(2, '0')}</b><strong>{s.name}</strong></td>{POSITIONS.map(p => <td key={p}>{referenceCA(s.id, p)}</td>)}<td><button className="text-button" disabled={s.id === stage.id} onClick={() => commit({ ...state, stageId: s.id }, 'Etapa aplicada a la plantilla.')}>{s.id === stage.id ? <><Check size={15} /> Actual</> : <>Usar etapa <ArrowRight size={15} /></>}</button></td></tr>)}</tbody></table></div><div className="rules-grid"><div><h3>20 para competir</h3><p>CA igual o superior a la referencia de su posición. Sin límite de edad. Se prioriza el margen de CA sobre el umbral y después el PA.</p></div><div><h3>10 para crecer</h3><p>CA inferior al umbral, edad de hasta 23 años inclusive y PA de la siguiente etapa. Se prioriza el margen de PA, CA y menor edad.</p></div><div><h3>Revisar con criterio</h3><p>Quien no cumpla el perfil o no tenga plaza queda en revisión. En Champions se conserva el PA objetivo de la etapa 9; no existe una décima etapa.</p></div></div><p className="footnote">Referencias propias del plan maestro, no datos oficiales de FM26. LAT tiene un ajuste de −2. Los empates finales se resuelven por identificador estable. Las plazas excedentes no pasan automáticamente a otro grupo.</p></section>}
         {page === 'analysis' && <AnalysisPanel state={state} onDetails={player => setDetailId(player.id)} onSavePlan={saveSquadPlan} />}
         {page === 'tracking' && <TrackingPanel state={state} onSavePlan={saveMinutePlan} onEditSnapshot={editSnapshot} onDeleteSnapshot={removeSnapshot} onImport={() => setPage('data')} onDetails={player => setDetailId(player.id)} />}
@@ -217,7 +228,7 @@ export default function App() {
     {detailPlayer && <PlayerDetails player={detailPlayer} players={state.players} onClose={() => setDetailId(null)} />}
     {departing && <DepartureDialog player={departing} defaultDate={lastContext?.gameDate ?? ''} onConfirm={departPlayer} onClose={() => setDeparting(null)} />}
     {pendingPurge && <Confirm title="Eliminar definitivamente" description={`Se borrará la ficha de ${pendingPurge.player.name}. Sus observaciones en los cortes históricos se conservan. Esta acción no afecta a Football Manager.`} action="Eliminar ficha" danger onClose={() => setPendingPurge(null)} onConfirm={() => { if (runArchive(() => purgeArchived(state, pendingPurge.player.id), 'Ficha eliminada.')) setPendingPurge(null); }} />}
-    {form && <PlayerForm player={form.player} onSave={savePlayer} onClose={() => setForm(null)} />}
+    {form && <PlayerForm player={form.player} defaultSquad={form.squad} onSave={savePlayer} onClose={() => setForm(null)} />}
     {pendingDelete && <Confirm title="Eliminar futbolista" description={`Se eliminará a ${pendingDelete.name} de tu registro. Si lo vendiste o quedó libre, usa «Vendido / libre» para conservar su ficha. Esta acción no afecta a Football Manager.`} action="Eliminar jugador" danger onClose={() => setPendingDelete(null)} onConfirm={() => { if (commit({ ...state, players: state.players.filter(p => p.id !== pendingDelete.id) }, 'Futbolista eliminado.')) setPendingDelete(null); }} />}
     {pendingImport && <Confirm title="Restaurar esta copia" description={`La copia contiene ${pendingImport.players.length} futbolistas, ${pendingImport.tracking.snapshots.length} cortes y ${pendingImport.tracking.minutePlans.length} planes de minutos; etapa ${STAGES[pendingImport.stageId].name}. Sustituirá la partida actual de ${state.players.length} futbolistas. Descarga antes una copia si quieres conservarla.`} action="Restaurar partida" onClose={() => setPendingImport(null)} onConfirm={() => { commit(pendingImport, 'Copia restaurada correctamente.', true); setPendingImport(null); }} />}
   </div>;

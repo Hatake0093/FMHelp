@@ -1,5 +1,6 @@
 import type { DynastyState, PlayerDraft } from '../../domain/model.ts';
 import { evaluateSquad, GROUP_LABELS } from '../../domain/players.ts';
+import { evaluateYouth, SQUAD_LABELS, YOUTH_STATUS_LABELS } from '../../domain/squads.ts';
 
 // Punto de extensión para futuros adaptadores CSV/HTML/Excel de Football Manager.
 export interface PlayerImportAdapter {
@@ -30,8 +31,10 @@ export function csvCell(value: string | number): string {
 export function buildCSVRows(state: DynastyState): (string | number)[][] {
   const extraHeaders = [...new Set(state.players.flatMap(p => Object.keys(p.fm?.values ?? {})))];
   return [
-    ['Nombre', 'Edad', 'Posición', 'CA', 'PA', 'Grupo', 'Motivo', 'Notas', 'Unique ID', 'Partida FM', ...extraHeaders.map(h => `FM · ${h}`)],
-    ...evaluateSquad(state.players, state.stageId).map(e => [e.player.name, e.player.age, e.player.position, e.player.ca, e.player.pa, GROUP_LABELS[e.group], e.reason, e.player.notes, e.player.fm?.uniqueId ?? '', e.player.fm?.saveId ?? '', ...extraHeaders.map(h => e.player.fm?.values[h] ?? '')]),
+    ['Nombre', 'Edad', 'Posición', 'CA', 'PA', 'Grupo', 'Motivo', 'Notas', 'Unique ID', 'Partida FM', 'Plantilla', ...extraHeaders.map(h => `FM · ${h}`)],
+    ...evaluateSquad(state.players, state.stageId).map(e => [e.player.name, e.player.age, e.player.position, e.player.ca, e.player.pa, GROUP_LABELS[e.group], e.reason, e.player.notes, e.player.fm?.uniqueId ?? '', e.player.fm?.saveId ?? '', SQUAD_LABELS.first, ...extraHeaders.map(h => e.player.fm?.values[h] ?? '')]),
+    // Los juveniles se evalúan por camino de ascenso, no con los cupos del primer equipo.
+    ...(['u21', 'u18'] as const).flatMap(squad => evaluateYouth(state.players, squad, state.stageId).map(e => [e.player.name, e.player.age, e.player.position, e.player.ca, e.player.pa, YOUTH_STATUS_LABELS[e.status], e.reason, e.player.notes, e.player.fm?.uniqueId ?? '', e.player.fm?.saveId ?? '', SQUAD_LABELS[squad], ...extraHeaders.map(h => e.player.fm?.values[h] ?? '')])),
   ];
 }
 

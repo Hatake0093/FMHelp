@@ -1,6 +1,7 @@
 import { POSITIONS } from './model.ts';
 import type { Evaluation, Group, Player, PlayerDraft } from './model.ts';
 import { nextStageId, referenceCA } from './stages.ts';
+import { inFirstTeam } from './squads.ts';
 
 export const CAPACITY = { competitive: 20, development: 10 } as const;
 export const CORE_SLOTS = 10;
@@ -15,11 +16,13 @@ export function validatePlayer(p: PlayerDraft): string | null {
   if (!Number.isInteger(p.ca) || p.ca < 1 || p.ca > 200) return 'El CA debe ser un entero entre 1 y 200.';
   if (!Number.isInteger(p.pa) || p.pa < p.ca || p.pa > 200) return 'El PA debe estar entre el CA y 200.';
   if (typeof p.notes !== 'string' || p.notes.length > 1000) return 'Las notas admiten hasta 1.000 caracteres.';
+  if (p.squad !== undefined && p.squad !== 'u21' && p.squad !== 'u18') return 'La plantilla debe ser Sub-21 o Sub-18 (sin valor = primer equipo).';
   return null;
 }
 
+// Solo el primer equipo: Sub-21 y Sub-18 se evalúan aparte (domain/squads.ts) y no consumen sus cupos.
 export function evaluateSquad(players: Player[], stageId: number): Evaluation[] {
-  const evaluations: Evaluation[] = players.map(player => {
+  const evaluations: Evaluation[] = players.filter(inFirstTeam).map(player => {
     const targetCA = referenceCA(stageId, player.position);
     const depthCA = referenceCA(stageId, player.position, 'depth');
     const targetPA = referenceCA(nextStageId(stageId), player.position);

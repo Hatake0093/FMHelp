@@ -3,10 +3,11 @@ import { ArrowRight, Clock3, History, Sprout, Target, Users } from 'lucide-react
 import { MINUTE_ROLES } from '../domain/model';
 import type { DynastyState, MinutePlan, Player, SnapshotContext, SquadSnapshot } from '../domain/model';
 import { normalizeSaveId } from '../domain/fm-data';
+import { SQUAD_LABELS } from '../domain/squads';
 import { blockedTalent, compareObservations, DEFAULT_BLOCKED_CRITERIA, minuteProgress, validateMinutePlan, validateSnapshotContext } from '../modules/analysis/tracking';
 
 const dateLabel = (date: string) => date.split('-').reverse().join('/');
-const cutLabel = (cut: SquadSnapshot) => `${dateLabel(cut.gameDate)} · ${cut.season} · ${cut.competition}`;
+const cutLabel = (cut: SquadSnapshot) => `${dateLabel(cut.gameDate)} · ${cut.season} · ${cut.competition}${cut.squad ? ` · ${SQUAD_LABELS[cut.squad]}` : ''}`;
 const delta = (value: number) => `${value > 0 ? '+' : ''}${value}`;
 const planStatus: Record<string, string> = { pending: 'Sin medición', achieved: 'Objetivo alcanzado', missed: 'Cerrado por debajo', starting: 'Inicio del plan', behind: 'Por debajo del ritmo', onTrack: 'En ritmo' };
 const talentStatus: Record<string, string> = { blocked: 'Posible bloqueo', watch: 'Revisar minutos', pending: 'Datos pendientes', ok: 'Sin señal de bloqueo' };
@@ -29,7 +30,7 @@ export default function TrackingPanel({ state, onSavePlan, onEditSnapshot, onDel
     <section className="panel tracking-panel" key={`${selectedSave}-${view}`}>
       {view === 'evolution' && <Evolution snapshots={snapshots} players={players} onImport={onImport} onDetails={onDetails} />}
       {view === 'minutes' && <Minutes players={players} snapshots={snapshots} plans={plans} onSavePlan={onSavePlan} initialPlayerId={planPlayerId} />}
-      {view === 'talent' && <Talent snapshots={snapshots} players={players} plans={plans} onDetails={onDetails} onPlans={playerId => { setPlanPlayerId(playerId); setView('minutes'); }} onImport={onImport} />}
+      {view === 'talent' && <Talent snapshots={snapshots.filter(s => !s.squad)} players={players} plans={plans} onDetails={onDetails} onPlans={playerId => { setPlanPlayerId(playerId); setView('minutes'); }} onImport={onImport} />}
     </section>
     {snapshots.length > 0 && <ManageCuts snapshots={snapshots} onEdit={onEditSnapshot} onDelete={onDeleteSnapshot} />}
     <p className="tracking-footnote">Fechas de la partida, no del ordenador. Los cortes conservan únicamente los datos observados en cada CSV y permanecen en tu copia JSON. Las alertas son referencias de planificación; el PA no garantiza desarrollo.</p>
@@ -48,7 +49,7 @@ function ManageCuts({ snapshots, onEdit, onDelete }: { snapshots: SquadSnapshot[
       ? <tr key={s.id}><td colSpan={4}><div className="tracking-form-grid">{field('gameDate', 'Fecha de la partida')}{field('statsFrom', 'Periodo desde')}{field('statsTo', 'Periodo hasta')}</div>
         {error && <p className="tracking-help" role="alert">{error}</p>}
         <button className="button primary compact" disabled={Boolean(error)} onClick={() => { if (onEdit(s.id, draft)) setEditingId(''); }}>Guardar fechas</button> <button className="button secondary compact" onClick={() => setEditingId('')}>Cancelar</button></td></tr>
-      : <tr key={s.id}><td>{dateLabel(s.gameDate)}<small className="evaluation-reason">{s.season}</small></td><td>{s.competition}<small className="evaluation-reason">{dateLabel(s.statsFrom)} → {dateLabel(s.statsTo)} · {s.sourceFile}</small></td><td>{s.players.length}</td>
+      : <tr key={s.id}><td>{dateLabel(s.gameDate)}<small className="evaluation-reason">{s.season}</small></td><td>{s.competition}{s.squad ? ` · ${SQUAD_LABELS[s.squad]}` : ''}<small className="evaluation-reason">{dateLabel(s.statsFrom)} → {dateLabel(s.statsTo)} · {s.sourceFile}</small></td><td>{s.players.length}</td>
         <td><button className="button secondary compact" onClick={() => start(s)}>Corregir fechas</button> <button className="button secondary compact" onClick={() => { if (window.confirm(`¿Eliminar el corte del ${dateLabel(s.gameDate)}? No se puede deshacer.`)) onDelete(s.id); }}>Eliminar</button></td></tr>)}</tbody></table></div>
   </details>;
 }
