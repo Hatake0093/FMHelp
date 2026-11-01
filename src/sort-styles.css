@@ -1,0 +1,5 @@
+.sort-button { display: inline-flex; align-items: center; gap: 5px; padding: 0; border: 0; background: none; color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit; cursor: pointer; }
+.sort-button svg { opacity: .35; flex: none; }
+.sort-button:hover svg, .sort-button.active svg { opacity: 1; }
+.sort-button.active { font-weight: 700; }
+.sort-button:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; border-radius: 3px; }

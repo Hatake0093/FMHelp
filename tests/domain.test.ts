@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import type { Player } from '../src/domain/model.ts';
 import { evaluateSquad, validatePlayer } from '../src/domain/players.ts';
 import { nextStageId, referenceCA, STAGES } from '../src/domain/stages.ts';
+import { compareBy, nextSort } from '../src/domain/sorting.ts';
 import { parseState } from '../src/services/storage.ts';
 import { csvCell } from '../src/modules/import-export/index.ts';
 
@@ -59,6 +60,16 @@ test('cambiar etapa reevalúa la plantilla sin mutarla', () => {
   assert.equal(group(p, 0), 'competitive');
   assert.equal(group(p, 1), 'review');
   assert.equal(p.ca, 45);
+});
+test('ordenar: sentido del primer clic, inversión, orden original y ausentes siempre al final', () => {
+  assert.deepEqual(nextSort(null, 'age', 'asc'), { key: 'age', dir: 'asc' });
+  assert.deepEqual(nextSort({ key: 'age', dir: 'asc' }, 'age', 'asc'), { key: 'age', dir: 'desc' });
+  assert.equal(nextSort({ key: 'age', dir: 'desc' }, 'age', 'asc'), null);
+  assert.deepEqual(nextSort({ key: 'age', dir: 'desc' }, 'ca', 'desc'), { key: 'ca', dir: 'desc' });
+  const rows = [{ n: 'b', v: 3 }, { n: 'a', v: 3 }, { n: 'c', v: null }, { n: 'd', v: 9 }];
+  const order = (dir: 'asc' | 'desc') => [...rows].sort(compareBy({ key: 'v', dir }, r => r.v, r => r.n)).map(r => r.n).join('');
+  assert.equal(order('asc'), 'abdc');
+  assert.equal(order('desc'), 'dabc');
 });
 test('validación de números, límites y PA no inferior a CA', () => {
   assert.equal(validatePlayer(player()), null);

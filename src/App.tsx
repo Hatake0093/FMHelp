@@ -6,8 +6,11 @@ import FMImportPanel from './components/FMImportPanel';
 import PlayerDetails from './components/PlayerDetails';
 import AnalysisPanel from './components/AnalysisWorkspace';
 import TrackingPanel from './components/TrackingPanel';
+import { SortHeader } from './components/SortHeader';
+import { compareBy, nextSort } from './domain/sorting';
+import type { SortDir, SortState } from './domain/sorting';
 import { POSITIONS } from './domain/model';
-import type { DynastyState, Group, MinutePlan, Player, PlayerDraft, SnapshotContext, SquadConstructionPlan } from './domain/model';
+import type { DynastyState, Evaluation, Group, MinutePlan, Player, PlayerDraft, SnapshotContext, SquadConstructionPlan } from './domain/model';
 import { evaluateSquad, GROUP_LABELS } from './domain/players';
 import { nextStageId, referenceCA, STAGES } from './domain/stages';
 import { normalizeSaveId } from './domain/fm-data';
@@ -31,7 +34,22 @@ const navigation: { id: Page; label: string; icon: LucideIcon; soon?: boolean }[
 ];
 const pageTitles: Record<Page, string> = { squad: 'Una plantilla. Una dinastía.', stages: 'El camino hacia la élite.', analysis: 'Más allá de la calidad actual.', tracking: 'El desarrollo necesita seguimiento.', economy: 'Crecer con una base sólida.', data: 'Tu partida, bajo tu control.' };
 
-const syncLabels: Record<SyncStatus, string> = { unsupported: 'Solo este navegador', unlinked: 'Sin archivo vinculado', 'needs-access': 'Reconecta tu archivo', synced: 'Guardado en archivo', saving: 'Guardando…', conflict: 'Conflicto con el archivo', error: 'Error con el archivo' };
+type SquadSortKey = 'name' | 'age' | 'position' | 'ca' | 'pa' | 'level' | 'group';
+// Sentido del primer clic: edad de menor a mayor (los jóvenes primero) y estadísticas de mayor a menor.
+const SQUAD_FIRST_DIR: Record<SquadSortKey, SortDir> = { name: 'asc', age: 'asc', position: 'asc', ca: 'desc', pa: 'desc', level: 'desc', group: 'asc' };
+const GROUP_ORDER: Record<Group, number> = { competitive: 0, development: 1, review: 2 };
+const squadValue = (e: Evaluation, key: string): number | string => {
+  switch (key) {
+    case 'age': return e.player.age;
+    case 'position': return e.player.position;
+    case 'ca': return e.player.ca;
+    case 'pa': return e.player.pa;
+    case 'level': return e.player.ca / e.targetCA;
+    case 'group': return GROUP_ORDER[e.group];
+    default: return e.player.name;
+  }
+};
+const syncLabels:Record<SyncStatus, string> = { unsupported: 'Solo este navegador', unlinked: 'Sin archivo vinculado', 'needs-access': 'Reconecta tu archivo', synced: 'Guardado en archivo', saving: 'Guardando…', conflict: 'Conflicto con el archivo', error: 'Error con el archivo' };
 const STORAGE_FAILED = 'No se pudo guardar en este navegador. Tus cambios están en memoria; descarga una copia JSON antes de cerrar.';
 
 export default function App() {
@@ -55,6 +73,7 @@ export default function App() {
   const [position, setPosition] = useState('all');
   const [form, setForm] = useState<{ player: Player | null } | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
+  const [squadSort, setSquadSort] = useState<SortState<SquadSortKey> | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Player | null>(null);
   const [pendingImport, setPendingImport] = useState<DynastyState | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -64,6 +83,7 @@ export default function App() {
   const summary = summarizeSquad(evaluations);
   const lastContext = state.tracking.snapshots.filter(s => normalizeSaveId(s.saveId) === normalizeSaveId(state.fmSaveId ?? '')).at(-1);
   const filtered = evaluations.filter(e => (group === 'all' || e.group === group) && (position === 'all' || e.player.position === position) && e.player.name.toLocaleLowerCase('es').includes(search.toLocaleLowerCase('es')));
+  const rows = squadSort ? [...filtered].sort(compareBy(squadSort, squadValue, e => e.player.name)) : filtered;
 
   function commit(updated: DynastyState, message: string, allowReset = false) {
     if (storageBlocked && !allowReset) { setNotice('Resuelve el aviso del guardado antes de modificar la partida.'); return false; }
@@ -152,7 +172,7 @@ export default function App() {
           <section className="panel reference-panel"><div className="section-heading"><div><h2>El nivel que buscamos</h2><p>Referencias por posición para esta etapa</p></div><button className="text-button" onClick={() => setPage('stages')}>Ver las 9 etapas <ArrowRight size={15} /></button></div><div className="reference-grid">{POSITIONS.map(p => <div key={p}><span>{p}</span><strong>{referenceCA(stage.id, p)}<small>CA</small></strong><p>Rotación <b>{referenceCA(stage.id, p, 'depth')}</b> · PA objetivo <b>{referenceCA(next.id, p)}</b></p></div>)}</div></section>
           <section className="panel squad-panel"><div className="section-heading"><div><h2>Plantilla y desarrollo <span className="count-badge">{state.players.length}</span></h2><p>La base de tu próxima gran temporada.</p></div><button className="button secondary compact" onClick={() => exportCSV(state)}><ArrowDownToLine size={15} /> Exportar CSV</button></div>
             <div className="table-toolbar"><div className="tabs" aria-label="Filtrar por grupo">{(['all', 'competitive', 'development', 'review'] as const).map(g => <button key={g} className={group === g ? 'selected' : ''} onClick={() => setGroup(g)} aria-pressed={group === g}>{g === 'all' ? 'Todos' : GROUP_LABELS[g]}</button>)}</div><div className="filters"><label className="search-field"><Search size={16} /><input aria-label="Buscar jugador" placeholder="Buscar jugador…" value={search} onChange={e => setSearch(e.target.value)} /></label><select aria-label="Filtrar por posición" value={position} onChange={e => setPosition(e.target.value)}><option value="all">Todas las posiciones</option>{POSITIONS.map(p => <option key={p}>{p}</option>)}</select></div></div>
-            <div className="table-scroll"><table><thead><tr><th>JUGADOR</th><th>EDAD</th><th>POSICIÓN</th><th>CA / PA</th><th>NIVEL ACTUAL</th><th>GRUPO PROPUESTO</th><th><span className="sr-only">Acciones</span></th></tr></thead><tbody>{filtered.map(e => <tr key={e.player.id}><td><div className="player-name"><span className="player-avatar">{e.player.name.split(/\s+/).slice(0, 2).map(s => s[0]).join('')}</span><div><strong>{e.player.name}</strong>{e.player.notes && <small title={e.player.notes}>{e.player.notes}</small>}</div></div></td><td>{e.player.age}</td><td><span className="position-chip">{e.player.position}</span></td><td><b>{e.player.ca}</b><span className="muted"> / {e.player.pa}</span></td><td><div className="level"><span>{Math.round(e.player.ca / e.targetCA * 100)}%</span><div><i style={{ width: `${Math.min(100, e.player.ca / e.targetCA * 100)}%` }} /></div></div></td><td><span className={`group-badge ${e.group}`}>{GROUP_LABELS[e.group]}</span><small className="evaluation-reason">{e.reason}</small></td><td><div className="row-actions"><button className="icon-button" aria-label={`Ver ficha FM de ${e.player.name}`} onClick={() => setDetailId(e.player.id)}><Eye size={15} /></button><button className="icon-button" aria-label={`Editar a ${e.player.name}`} onClick={() => setForm({ player: e.player })}><Pencil size={15} /></button><button className="icon-button danger" aria-label={`Eliminar a ${e.player.name}`} onClick={() => setPendingDelete(e.player)}><Trash2 size={15} /></button></div></td></tr>)}</tbody></table></div>
+            <div className="table-scroll"><table><thead><tr>{([['name', 'JUGADOR'], ['age', 'EDAD'], ['position', 'POSICIÓN'], ['ca', 'CA'], ['pa', 'PA'], ['level', 'NIVEL ACTUAL'], ['group', 'GRUPO PROPUESTO']] as const).map(([key, label]) => <SortHeader key={key} label={label} sortKey={key} sort={squadSort} onSort={k => setSquadSort(nextSort(squadSort, k, SQUAD_FIRST_DIR[k]))} />)}<th><span className="sr-only">Acciones</span></th></tr></thead><tbody>{rows.map(e => <tr key={e.player.id}><td><div className="player-name"><span className="player-avatar">{e.player.name.split(/\s+/).slice(0, 2).map(s => s[0]).join('')}</span><div><strong>{e.player.name}</strong>{e.player.notes && <small title={e.player.notes}>{e.player.notes}</small>}</div></div></td><td>{e.player.age}</td><td><span className="position-chip">{e.player.position}</span></td><td><b>{e.player.ca}</b></td><td>{e.player.pa}</td><td><div className="level"><span>{Math.round(e.player.ca / e.targetCA * 100)}%</span><div><i style={{ width: `${Math.min(100, e.player.ca / e.targetCA * 100)}%` }} /></div></div></td><td><span className={`group-badge ${e.group}`}>{GROUP_LABELS[e.group]}</span><small className="evaluation-reason">{e.reason}</small></td><td><div className="row-actions"><button className="icon-button" aria-label={`Ver ficha FM de ${e.player.name}`} onClick={() => setDetailId(e.player.id)}><Eye size={15} /></button><button className="icon-button" aria-label={`Editar a ${e.player.name}`} onClick={() => setForm({ player: e.player })}><Pencil size={15} /></button><button className="icon-button danger" aria-label={`Eliminar a ${e.player.name}`} onClick={() => setPendingDelete(e.player)}><Trash2 size={15} /></button></div></td></tr>)}</tbody></table></div>
             {!filtered.length && <div className="empty-state"><span className="empty-icon"><Users size={28} /></span><h3>{state.players.length ? 'No hay coincidencias' : 'Aquí empieza tu dinastía'}</h3><p>{state.players.length ? 'Prueba con otro nombre, grupo o posición.' : 'Añade tu primer futbolista y descubre su lugar en el proyecto.'}</p><div>{state.players.length ? <button className="button secondary" onClick={() => { setSearch(''); setGroup('all'); setPosition('all'); }}>Limpiar filtros</button> : <><button className="button primary" onClick={() => setForm({ player: null })}><Plus size={16} /> Añadir primer jugador</button><button className="text-button" onClick={loadDemo}>Probar con datos ficticios <ArrowRight size={15} /></button></>}</div></div>}
             <div className="table-footer"><span>{filtered.length} de {state.players.length} futbolistas</span><span>Primer equipo: {summary.competitive + summary.development} / 30 plazas</span></div>
           </section>
