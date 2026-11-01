@@ -39,7 +39,7 @@
 **Fase 6 · Economía e informe de decisión** *(cierre del proyecto)*
 - 6.1 Valor deportivo por sueldo. `Sueldo`, `Valor de traspaso` y `Final` son texto (`6.5m € p/m`, `14M € - 16M €`). Un parser de importes permitiría calcular puntos de rol por millón. Hay que conservar el texto original, como hoy.
 - 6.2 Propuesta individual de **vender, conservar o ceder**. Se apoya en encaje por rol, cobertura y sucesión, minutos y evolución, margen de desarrollo, contrato y coste.
-  - **Primera versión en curso: vista «Salidas»** (`src/modules/analysis/departure.ts`, `DeparturePanel.tsx`). Recomienda a quién sacar con tres señales: excedente de cupo, techo bajo (PA) y falta de puesto en el plan. Solo los jugadores en «revisión» pueden salir como recomendados, y nunca si ocupan un puesto del plan.
+  - **Primera versión hecha: vista «Salidas»** (`src/modules/analysis/departure.ts`, `DeparturePanel.tsx`). Recomienda a quién sacar con tres señales: excedente de cupo, techo bajo (PA) y falta de puesto en el plan. Solo los jugadores en «revisión» pueden salir como recomendados, y nunca si ocupan un puesto del plan.
   - Pendiente de ampliar: **valor alto y contrato corto** (necesita el parser de importes de 6.1); **ceder** como tercera opción junto a vender y libre (el archivo solo conoce `sold` y `free`); **talento bloqueado** (cruzar con `blockedTalent` para sugerir cesión en lugar de venta a jóvenes sin minutos); **rendimiento** (usar calificación y minutos de 4.2 para no recomendar a quien rinde por encima de su perfil).
   - El umbral de «muy joven» (`YOUNG_PA_AGE = 20`) es una referencia propia, sin calibrar.
 
