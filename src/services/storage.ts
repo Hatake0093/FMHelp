@@ -5,6 +5,7 @@ import { STAGES } from '../domain/stages.ts';
 import { fmIdentity, validFMData } from '../domain/fm-data.ts';
 import { emptyTracking, parseTracking, validGameDate } from '../modules/analysis/tracking.ts';
 import { parseSquadPlans } from '../modules/analysis/construction.ts';
+import { parseTactics } from '../modules/analysis/tactics.ts';
 import { dbGet, dbSet } from './db.ts';
 
 const STATE_KEY = 'state';
@@ -38,7 +39,7 @@ function parseArchive(value: unknown, ids: Set<string>, fmIds: Set<string>): Arc
 export function parseState(raw: string): DynastyState {
   const value: unknown = JSON.parse(raw);
   if (!value || typeof value !== 'object') throw new Error('El archivo no contiene una partida válida.');
-  const state = value as Omit<DynastyState, 'version' | 'tracking' | 'squadPlans' | 'archive'> & { version: number; tracking?: unknown; squadPlans?: unknown; archive?: unknown };
+  const state = value as Omit<DynastyState, 'version' | 'tracking' | 'squadPlans' | 'archive' | 'tactics'> & { version: number; tracking?: unknown; squadPlans?: unknown; archive?: unknown; tactics?: unknown };
   if (![1, 2, 3, 4].includes(state.version) || !Number.isInteger(state.stageId) || !STAGES[state.stageId] || !Array.isArray(state.players)) throw new Error('Versión, etapa o plantilla no válidas.');
   const ids = new Set<string>();
   const fmIds = new Set<string>();
@@ -48,7 +49,8 @@ export function parseState(raw: string): DynastyState {
   const archive = state.version < 4 ? [] : parseArchive(state.archive, ids, fmIds);
   const tracking = state.version === 1 ? emptyTracking() : parseTracking(state.tracking);
   const squadPlans = state.version < 3 ? [] : parseSquadPlans(state.squadPlans);
-  return { version: 4, stageId: state.stageId, players, archive, tracking, squadPlans, ...(state.fmSaveId ? { fmSaveId: state.fmSaveId } : {}) };
+  const tactics = parseTactics(state.tactics);
+  return { version: 4, stageId: state.stageId, players, archive, tracking, squadPlans, ...(tactics ? { tactics } : {}), ...(state.fmSaveId ? { fmSaveId: state.fmSaveId } : {}) };
 }
 
 export async function loadState(): Promise<{ state: DynastyState; error: string | null }> {

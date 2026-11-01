@@ -39,6 +39,49 @@ export interface DynastyState {
   fmSaveId?: string;
   tracking: TrackingState;
   squadPlans: SquadConstructionPlan[];
+  // Opcional para leer copias anteriores: sin él, la página Táctica arranca vacía.
+  tactics?: TacticsState;
+}
+export const TACTIC_PHASES = ['possession', 'noPossession'] as const;
+export type TacticPhase = typeof TACTIC_PHASES[number];
+export interface TacticInstruction {
+  id: string;
+  phase: TacticPhase;
+  name: string;
+  value: string;
+}
+// Resultados de los partidos jugados desde el registro anterior (no acumulados), para medir la táctica por tramos.
+export interface TacticPeriod {
+  id: string;
+  gameDate: string;
+  label: string;
+  played: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  setPieceFor: number;
+  setPieceAgainst: number;
+  xgFor: number | null;
+  xgAgainst: number | null;
+  notes: string;
+}
+export interface TacticChange {
+  id: string;
+  gameDate: string;
+  change: string;
+  expected: string;
+  result: string;
+}
+export interface TacticsState {
+  formation: string;
+  style: string;
+  mentality: string;
+  notes: string;
+  instructions: TacticInstruction[];
+  periods: TacticPeriod[];
+  changes: TacticChange[];
 }
 export interface SquadSlot {
   id: string;

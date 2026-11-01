@@ -39,6 +39,7 @@ Verificación: pruebas del dominio y de importación progresiva, compilación de
 
 ### Gestión de plantilla y datos
 
+- Página **Táctica**: registra el esquema, el estilo, la mentalidad y las instrucciones de equipo (con y sin posesión), los resultados por periodo (partidos, goles, goles de balón parado y xG opcional, con puntos por partido y porcentaje de balón parado) y un diario de cambios con lo esperado y lo que pasó. Los periodos son de los partidos desde el registro anterior, no acumulados. Se guarda en `tactics` dentro de la partida; las copias anteriores se leen sin ella. Lógica en `src/modules/analysis/tactics.ts`.
 - Alta, consulta, edición y eliminación confirmada de jugadores; edad, posición, CA, PA y notas.
 - Plantillas **Primer equipo, Sub-21 y Sub-18**: pestañas en Mi plantilla, un CSV por plantilla (se elige su plantilla al importar) y señales de ascenso (listo para subir, proyecto, revisar) según edad límite y potencial. Sub-21 hasta 21 años, Sub-18 de 15 a 18, cupo orientativo de 25. Los cupos y umbrales del primer equipo no cuentan a los juveniles. Reglas en `src/domain/squads.ts`.
 - «Vendido / libre»: archiva al jugador (con motivo y fecha opcional) sin perder su ficha. Deja de contar en la plantilla; desde «Exjugadores» se puede ver su ficha, restaurar o eliminar definitivamente. Formato de copia v4 (`archive`).
