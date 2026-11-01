@@ -3,6 +3,7 @@ import type { DynastyState, Player, SquadConstructionPlan } from '../domain/mode
 import AttributeRanking from './AnalysisPanel';
 import PlayerAnalysis from './PlayerAnalysis';
 import ConstructionPanel from './ConstructionPanel';
+import PerformancePanel from './PerformancePanel';
 
 export default function AnalysisWorkspace({ state, onDetails, onSavePlan }: { state: DynastyState; onDetails: (player: Player) => void; onSavePlan: (plan: SquadConstructionPlan) => boolean }) {
   const players = state.players;
@@ -14,8 +15,9 @@ export default function AnalysisWorkspace({ state, onDetails, onSavePlan }: { st
       <button className={view === 'individual' ? 'selected' : ''} aria-pressed={view === 'individual'} onClick={() => setView('individual')}>Por jugador</button>
       <button className={view === 'attributes' ? 'selected' : ''} aria-pressed={view === 'attributes'} onClick={() => setView('attributes')}>Ranking de atributos</button>
       <button className={view === 'construction' ? 'selected' : ''} aria-pressed={view === 'construction'} onClick={() => setView('construction')}>Construcción de plantilla</button>
+      <button className={view === 'performance' ? 'selected' : ''} aria-pressed={view === 'performance'} onClick={() => setView('performance')}>Rendimiento vs perfil</button>
     </div>
-    {view === 'construction' ? <ConstructionPanel state={state} onSavePlan={onSavePlan} onDetails={onDetails} /> : view === 'attributes' ? <AttributeRanking players={players} onDetails={onDetails} /> : <section className="panel individual-panel">
+    {view === 'construction' ? <ConstructionPanel state={state} onSavePlan={onSavePlan} onDetails={onDetails} /> : view === 'performance' ? <PerformancePanel state={state} onDetails={onDetails} /> : view === 'attributes' ? <AttributeRanking players={players} onDetails={onDetails} /> : <section className="panel individual-panel">
       <div className="section-heading"><div><span className="module-tag">LABORATORIO DE JUGADORES</span><h2>Encuentra su lugar en el equipo.</h2><p>Encaje por rol, alternativas de posición y comparación con tus compañeros.</p></div></div>
       {player ? <>
         <div className="individual-picker"><label>Jugador a analizar<select value={player.id} onChange={e => setPlayerId(e.target.value)}>{[...players].sort((a, b) => a.name.localeCompare(b.name, 'es')).map(p => <option key={p.id} value={p.id}>{p.name} · {p.position}{p.fm ? ` · ${p.fm.saveId}` : ''}</option>)}</select></label><button className="button secondary" onClick={() => onDetails(player)}>Ver ficha completa</button></div>

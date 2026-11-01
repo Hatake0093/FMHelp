@@ -9,6 +9,7 @@ import './tracking-styles.css';
 import './construction-styles.css';
 import './sort-styles.css';
 import './departures-styles.css';
+import './performance-styles.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode><App /></React.StrictMode>,
