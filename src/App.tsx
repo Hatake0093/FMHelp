@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowDownToLine, ArrowRight, ArrowRightLeft, BarChart3, Check, ChevronRight, CircleHelp, ClipboardList, Database, Eye, Flag, HardDrive, Landmark, Leaf, LogOut, Pencil, Plus, RotateCcw, Search, Shield, Swords, Trash2, Upload, Users, X } from 'lucide-react';
+import { ArrowDownToLine, ArrowRight, ArrowRightLeft, BarChart3, Check, ChevronRight, CircleHelp, ClipboardList, Database, Eye, Flag, HardDrive, Leaf, LogOut, Pencil, Plus, RotateCcw, Search, Shield, Swords, Trash2, Upload, Users, X } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import PlayerForm from './components/PlayerForm';
 import FMImportPanel from './components/FMImportPanel';
@@ -29,7 +29,7 @@ import { deleteSnapshot, importWithTracking, updateSnapshotContext, upsertMinute
 import type { ImportRow } from './modules/import-export/fm-csv';
 import { upsertSquadPlan } from './modules/analysis/construction';
 
-type Page = 'squad' | 'stages' | 'analysis' | 'tracking' | 'tactics' | 'departures' | 'economy' | 'data';
+type Page = 'squad' | 'stages' | 'analysis' | 'tracking' | 'tactics' | 'departures' | 'data';
 const navigation: { id: Page; label: string; icon: LucideIcon; soon?: boolean }[] = [
   { id: 'squad', label: 'Mi plantilla', icon: Users },
   { id: 'stages', label: 'Plan maestro', icon: Flag },
@@ -37,10 +37,9 @@ const navigation: { id: Page; label: string; icon: LucideIcon; soon?: boolean }[
   { id: 'tracking', label: 'Seguimiento', icon: ClipboardList },
   { id: 'tactics', label: 'Táctica', icon: Swords },
   { id: 'departures', label: 'Salidas', icon: ArrowRightLeft },
-  { id: 'economy', label: 'Economía', icon: Landmark, soon: true },
   { id: 'data', label: 'Centro de datos', icon: Database },
 ];
-const pageTitles: Record<Page, string> = { squad: 'Una plantilla. Una dinastía.', stages: 'El camino hacia la élite.', analysis: 'Más allá de la calidad actual.', tracking: 'El desarrollo necesita seguimiento.', tactics: 'Una táctica se mide con resultados.', departures: 'Saber cuándo dejar ir.', economy: 'Crecer con una base sólida.', data: 'Tu partida, bajo tu control.' };
+const pageTitles: Record<Page, string> = { squad: 'Una plantilla. Una dinastía.', stages: 'El camino hacia la élite.', analysis: 'Más allá de la calidad actual.', tracking: 'El desarrollo necesita seguimiento.', tactics: 'Una táctica se mide con resultados.', departures: 'Saber cuándo dejar ir.', data: 'Tu partida, bajo tu control.' };
 
 type SquadSortKey = 'name' | 'age' | 'position' | 'ca' | 'pa' | 'level' | 'group';
 // Sentido del primer clic: edad de menor a mayor (los jóvenes primero) y estadísticas de mayor a menor.
@@ -215,7 +214,6 @@ export default function App() {
         {page === 'tracking' && <TrackingPanel state={state} onSavePlan={saveMinutePlan} onEditSnapshot={editSnapshot} onDeleteSnapshot={removeSnapshot} onImport={() => setPage('data')} onDetails={player => setDetailId(player.id)} />}
         {page === 'tactics' && <TacticsPanel tactics={state.tactics} defaultDate={lastContext?.gameDate ?? ''} onSave={(tactics, message) => commit({ ...state, tactics }, message)} />}
         {page === 'departures' && <DeparturePanel state={state} onDetails={player => setDetailId(player.id)} onDepart={setDeparting} />}
-        {page === 'economy' && <section className="panel roadmap-panel"><span className="module-tag">SIGUIENTE CAPÍTULO</span><Landmark size={48} /><h2>La sostenibilidad de la dinastía</h2><p>Los sueldos, contratos y valores importados ya se conservan en cada ficha FM. El módulo de presupuestos e infraestructura está pendiente; los importes todavía se muestran como texto original.</p><div className="roadmap-grid">{['Contratos y salarios', 'Balance de temporada', 'Cantera e instalaciones'].map((label, i) => <div key={label}><span>0{i + 1}</span><h3>{label}</h3><small>Planificado</small></div>)}</div><button className="button secondary" onClick={() => setPage('squad')}>Volver a la plantilla <ArrowRight size={16} /></button></section>}
         {page === 'data' && <><section className="panel"><div className="section-heading"><div><h2>Archivo vinculado</h2><p>Tu partida se guarda en un archivo JSON que puedes abrir desde otro navegador.</p></div><HardDrive size={24} /></div>
           <div className="data-grid">{!fileSync.supported
             ? <div><HardDrive size={25} /><h3>No disponible en este navegador</h3><p>Guardar en un archivo automáticamente requiere Chrome, Edge u Opera. Mientras tanto, usa las copias JSON de abajo.</p></div>

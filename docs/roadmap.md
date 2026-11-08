@@ -26,12 +26,12 @@
 - 3.6 Página **Táctica**: esquema, instrucciones de equipo con y sin posesión, resultados por periodo (puntos por partido, diferencia de goles, porcentaje de goles de balón parado, xG) y diario de cambios. Datos introducidos a mano; se guardan en `tactics` sin subir la versión de la copia.
 
 **Fase 4 · Completar el análisis**
+- 4.1 Porteros evaluables: el exportador incluye `Uno contra uno`, `Salidas (tendencia)`, `Saques de puerta` y `Saque con la mano`, y la app reconoce esas cabeceras (también `Tiros libres`). Con el CSV del 2026-11-01 ambos perfiles de portero alcanzan el 100 % de cobertura.
 - 4.2 Rendimiento frente a perfil (Análisis deportivo → Rendimiento vs perfil; `src/modules/analysis/performance.ts`). Compara el percentil del mejor rol del grupo de posición con el percentil de calificación en un corte, usando los atributos de ese mismo corte. Marca por encima, por debajo, acorde y «buen perfil sin jugar»; exige 450 min y 4 jugadores por posición. Umbrales propios, sin calibrar (`DEFAULT_PERFORMANCE_CRITERIA`). Los porteros quedan pendientes hasta 4.1. Pendiente: usarlo en la vista Salidas.
 
 ## Pendiente
 
 **Fase 4 · Completar el análisis** *(hallazgos de la revisión del 2026-11-01, pendientes de contrastar con la página de referencia que aún no se ha compartido)*
-- 4.1 **Porteros sin evaluar.** El CSV no trae `Uno contra uno`, `Salidas` ni `Saques`, y los dos perfiles de portero los marcan como esenciales (`oneOnOnes`, `rushingOut`), así que siempre salen «Pendiente». Solución: añadir esas columnas al exportador y reimportar. Coste bajo, impacto alto.
 - 4.3 **Pierna buena y `Posición/rol`.** Se guardan pero no influyen. Útiles para el lado de laterales y extremos, y para centrales con salida.
 - 4.4 **Pesos de rol configurables.** Hoy están fijos en `src/modules/analysis/roles.ts`. Permitir ajustarlos desde la interfaz y guardarlos con la partida.
 - 4.5 **Táctica frente a resultados.** La página Táctica ya registra el esquema, las instrucciones, los resultados por periodo y un diario de cambios (ver «Entregado», 3.6). Pendiente: registrar las instrucciones sin posesión y completar «Estrategia previa»; cruzar los periodos con los cortes de Seguimiento (calificación y minutos por jugador); y valorar importar un export de estadísticas de equipo en vez de escribirlas a mano. Las hipótesis a contrastar están en `docs/tactica.md`.
